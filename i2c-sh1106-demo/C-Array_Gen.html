@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>32x32 C - Array Gen</title>
+    <style>
+        table {
+            border-spacing: 0;
+            border-collapse: collapse;
+        }
+
+        td {
+            width: 15px;
+            height: 15px;
+            border: 1px solid black;
+            margin: 0 0 0 0;
+            padding: 0 0 0 0;
+        }
+
+        .selected {
+            background-color: black;
+        }
+
+        #array {
+            width: 510px;
+            height: 200px;
+        }
+    </style>
+</head>
+
+<body ondragstart="return false;" ondrop="return false;">
+    <h2>Draw here:</h2>
+    <textarea cols="20" rows="2" readonly id="array"></textarea>
+    <br />
+    <button id="clear_btn">Clear</button>
+</body>
+<script>
+    function tableCreate(row, col) {
+        let body = document.body;
+        let tbl = document.createElement('table');
+
+        for (let i = 0; i < row; i++) {
+            let tr = tbl.insertRow();
+            tr.setAttribute('row', i + 1);
+            for (let j = 0; j < col; j++) {
+                let td = tr.insertCell();
+                td.setAttribute('col', j + 1);
+            }
+        }
+        body.insertBefore(tbl, document.getElementById('array'));
+    }
+
+    function calcArray() {
+        var pixels = new Array(32);
+        for (var i = 0; i < 32; i++) {
+            pixels[i] = 0;
+        }
+        document.querySelectorAll('td').forEach(item => {
+            if (item.classList.contains("selected"))
+                pixels[item.getAttribute("col") - 1] |= (1 << (item.parentElement.getAttribute("row") - 1) >>> 0);
+        });
+        console.log(pixels);
+        var string = "{ ";
+        pixels.forEach(pixel => {
+            string += "0x" + ('00000000' + (pixel >>> 0).toString(16).toUpperCase()).slice(-8) + ", ";
+        });
+        string = string.slice(0, -2);
+        string += " }";
+        document.getElementById("array").innerHTML = string;
+    }
+
+    let del;
+
+    let downListener = (event) => {
+        if (event.srcElement.classList.contains("selected")) {
+            del = 1;
+        }
+        else {
+            del = 0;
+        }
+        selectElement(event.srcElement);
+        document.body.addEventListener('mousemove', moveListener)
+        document.body.addEventListener('mouseup', upListener)
+    }
+
+    document.body.addEventListener('mousedown', downListener)
+
+    let moveListener = (event) => {
+        selectElement(event.srcElement);
+    }
+
+    let upListener = () => {
+        document.body.removeEventListener('mousemove', moveListener)
+        document.body.removeEventListener('mouseup', upListener)
+        calcArray();
+    }
+
+    let selectElement = (element) => {
+        if (element.nodeName == "TD")
+            if (del)
+                element.classList.remove("selected");
+            else
+                element.classList.add("selected");
+    }
+
+    (function () {
+        tableCreate(32, 32);
+        calcArray();
+
+        document.querySelector('#clear_btn').addEventListener('click', event => {
+            document.querySelectorAll('td').forEach(item => {
+                item.classList.remove("selected");
+                calcArray();
+            });
+        });
+    })();
+</script>
+
+</html>
